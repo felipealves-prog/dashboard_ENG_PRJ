@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Projetos Executivos | SolarGrid</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --aurora: #EC6726; --eclipse: #000000; --nebulosa: #CBD6D7;
+  --sirius: #F3F3F3; --branco: #FFFFFF; --orion: #151B21;
+  --vega: #F33C13; --ok: #2e7d32; --text-muted: #7C7C7B;
+  --text-sec: #4A4A49; --border: #CBD6D7;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Montserrat',sans-serif; background:var(--sirius); color:var(--eclipse); min-height:100vh; }
+
+/* HEADER */
+.header { background:var(--eclipse); padding:16px 36px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; border-bottom:3px solid var(--aurora); }
+.logo { display:flex; align-items:center; gap:12px; }
+.logo-mark { width:34px; height:34px; background:var(--aurora); border-radius:6px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; color:#fff; }
+.logo-text { color:#fff; font-size:17px; font-weight:700; }
+.logo-text span { color:var(--aurora); }
+.header-right { text-align:right; }
+.header-title { color:#fff; font-size:12px; font-weight:600; letter-spacing:1px; text-transform:uppercase; }
+.header-sub { color:var(--nebulosa); font-size:10px; margin-top:2px; }
+.header-update { color:var(--aurora); font-size:10px; font-weight:600; margin-top:3px; }
+
+/* FILTER BAR */
+.filter-bar { background:var(--branco); padding:12px 36px; display:flex; align-items:center; gap:10px; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+.flabel { font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); }
+.fbtn { padding:5px 14px; border-radius:20px; border:1.5px solid var(--border); background:transparent; font-family:'Montserrat',sans-serif; font-size:11px; font-weight:600; cursor:pointer; color:var(--text-sec); transition:all .2s; }
+.fbtn:hover { border-color:var(--aurora); color:var(--aurora); }
+.fbtn.on { background:var(--eclipse); border-color:var(--eclipse); color:#fff; }
+.fdiv { width:1px; height:22px; background:var(--border); margin:0 4px; }
+.refresh-btn { margin-left:auto; padding:7px 16px; border-radius:6px; background:var(--aurora); border:none; font-family:'Montserrat',sans-serif; font-size:11px; font-weight:600; color:#fff; cursor:pointer; display:flex; align-items:center; gap:6px; transition:background .2s; }
+.refresh-btn:hover { background:var(--vega); }
+
+/* MAIN */
+.main { padding:28px 36px; }
+
+/* KPI */
+.kpi-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:14px; margin-bottom:28px; }
+.kpi { border-radius:12px; padding:22px 20px 18px; position:relative; overflow:hidden; transition:transform .2s; }
+.kpi:hover { transform:translateY(-2px); }
+.kpi.dark { background:var(--eclipse); }
+.kpi.accent { background:var(--aurora); }
+.kpi.light { background:var(--branco); border:1.5px solid var(--border); }
+.kpi-lbl { font-size:9px; font-weight:600; letter-spacing:1.2px; text-transform:uppercase; margin-bottom:8px; }
+.kpi.dark .kpi-lbl, .kpi.accent .kpi-lbl { color:var(--nebulosa); }
+.kpi.light .kpi-lbl { color:var(--text-muted); }
+.kpi-val { font-size:40px; font-weight:700; line-height:1; margin-bottom:4px; }
+.kpi.dark .kpi-val, .kpi.accent .kpi-val { color:#fff; }
+.kpi.light .kpi-val { color:var(--eclipse); }
+.kpi-sub { font-size:10px; font-weight:500; }
+.kpi.dark .kpi-sub, .kpi.accent .kpi-sub { color:var(--nebulosa); }
+.kpi.light .kpi-sub { color:var(--text-muted); }
+.kpi-badge { display:inline-block; margin-top:6px; padding:2px 9px; border-radius:20px; font-size:9px; font-weight:700; background:var(--aurora); color:#fff; }
+.kpi.accent .kpi-badge { background:rgba(0,0,0,.2); }
+
+/* SECTION */
+.sec-hdr { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+.sec-title { font-size:14px; font-weight:700; display:flex; align-items:center; gap:8px; }
+.sec-title::before { content:''; display:inline-block; width:4px; height:18px; background:var(--aurora); border-radius:2px; }
+.sec-sub { font-size:10px; color:var(--text-muted); font-weight:500; }
+
+/* UFV CARDS */
+.ufv-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:14px; margin-bottom:28px; }
+.ufv-card { background:var(--branco); border-radius:12px; padding:20px; border:1.5px solid var(--border); transition:border-color .2s,transform .2s; }
+.ufv-card:hover { border-color:var(--aurora); transform:translateY(-2px); }
+.ufv-hdr { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+.ufv-name { font-size:17px; font-weight:700; }
+.ufv-tag { font-size:9px; font-weight:600; padding:2px 9px; border-radius:20px; background:var(--sirius); color:var(--text-sec); text-transform:uppercase; }
+.disc-row { display:flex; flex-direction:column; gap:9px; }
+.disc-item { display:flex; align-items:center; gap:8px; }
+.disc-lbl { font-size:9px; font-weight:600; text-transform:uppercase; letter-spacing:.5px; color:var(--text-muted); width:80px; flex-shrink:0; }
+.pbar-wrap { flex:1; height:7px; background:var(--sirius); border-radius:4px; overflow:hidden; }
+.pbar-fill { height:100%; border-radius:4px; transition:width .8s ease; }
+.fill-civil { background:var(--eclipse); }
+.fill-eletro { background:var(--aurora); }
+.fill-geral { background:linear-gradient(90deg,var(--eclipse),var(--aurora)); }
+.disc-pct { font-size:11px; font-weight:700; width:34px; text-align:right; flex-shrink:0; }
+.ufv-stats { display:flex; gap:10px; margin-top:12px; padding-top:12px; border-top:1px solid var(--sirius); }
+.ufv-stat { flex:1; text-align:center; }
+.ufv-stat-val { font-size:18px; font-weight:700; }
+.ufv-stat-lbl { font-size:8px; font-weight:600; text-transform:uppercase; letter-spacing:.5px; color:var(--text-muted); margin-top:1px; }
+
+/* CHARTS */
+.charts-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:18px; margin-bottom:28px; }
+.chart-card { background:var(--branco); border-radius:12px; padding:22px; border:1.5px solid var(--border); }
+.chart-card.wide { grid-column:span 2; }
+.chart-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.8px; margin-bottom:3px; }
+.chart-desc { font-size:10px; color:var(--text-muted); margin-bottom:16px; }
+.chart-wrap { position:relative; height:220px; }
+.chart-wrap.tall { height:270px; }
+
+/* WEEK */
+.week-row { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:28px; }
+.week-card { background:var(--branco); border-radius:12px; border:1.5px solid var(--border); padding:22px; }
+.week-list { list-style:none; margin-top:14px; }
+.week-list li { display:flex; align-items:flex-start; gap:10px; padding:9px 0; border-bottom:1px solid var(--sirius); font-size:11px; }
+.week-list li:last-child { border-bottom:none; }
+.wdot { width:7px; height:7px; border-radius:50%; margin-top:3px; flex-shrink:0; }
+.wdot.civil { background:var(--eclipse); }
+.wdot.eletro { background:var(--aurora); }
+.witem-name { font-weight:600; flex:1; }
+.witem-ufv { font-size:9px; font-weight:600; color:var(--text-muted); text-transform:uppercase; }
+
+/* TABLE */
+.tbl-section { margin-bottom:28px; }
+.tbl-filters { display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap; align-items:center; }
+.tbl-search { padding:7px 12px; border-radius:8px; border:1.5px solid var(--border); font-family:'Montserrat',sans-serif; font-size:11px; color:var(--eclipse); background:var(--branco); min-width:200px; outline:none; }
+.tbl-search:focus { border-color:var(--aurora); }
+.tbl-sel { padding:7px 12px; border-radius:8px; border:1.5px solid var(--border); font-family:'Montserrat',sans-serif; font-size:11px; color:var(--eclipse); background:var(--branco); outline:none; cursor:pointer; }
+.tbl-wrap { background:var(--branco); border-radius:12px; border:1.5px solid var(--border); overflow:hidden; overflow-x:auto; }
+table { width:100%; border-collapse:collapse; font-size:11px; }
+thead tr { background:var(--eclipse); }
+th { padding:11px 12px; text-align:left; font-size:9px; font-weight:700; letter-spacing:.8px; text-transform:uppercase; color:#fff; white-space:nowrap; }
+tbody tr { border-bottom:1px solid var(--sirius); transition:background .15s; }
+tbody tr:last-child { border-bottom:none; }
+tbody tr:hover { background:#fdf5f1; }
+td { padding:10px 12px; font-weight:500; vertical-align:middle; }
+.td-muted { color:var(--text-muted); font-size:10px; font-weight:400; }
+
+/* CHIPS & PILLS */
+.status-pill { display:inline-block; padding:2px 9px; border-radius:20px; font-size:9px; font-weight:700; white-space:nowrap; }
+.s-lib { background:#e8f5e9; color:#2e7d32; }
+.s-apr { background:#e3f2fd; color:#1565c0; }
+.s-and { background:#fff8e1; color:#f57f17; }
+.s-nin { background:var(--sirius); color:var(--text-muted); }
+.s-atr { background:#ffebee; color:#c62828; }
+.s-rev { background:#f3e5f5; color:#6a1b9a; }
+.disc-chip { display:inline-block; padding:2px 7px; border-radius:4px; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.4px; }
+.dc-civil { background:var(--eclipse); color:#fff; }
+.dc-eletro { background:var(--aurora); color:#fff; }
+.dv-neg { color:var(--vega); font-weight:700; }
+.dv-pos { color:var(--ok); font-weight:700; }
+.dv-zero { color:var(--text-muted); }
+.ind-ok { color:var(--ok); font-weight:700; }
+.ind-warn { color:var(--aurora); font-weight:700; }
+.ind-bad { color:var(--vega); font-weight:700; }
+.pbar-mini-wrap { display:flex; align-items:center; gap:6px; }
+.pbar-mini { width:52px; height:4px; background:var(--sirius); border-radius:3px; overflow:hidden; flex-shrink:0; }
+.pbar-mini-fill { height:100%; border-radius:3px; background:var(--aurora); }
+
+/* LOADING & ERROR */
+.loading-overlay { position:fixed; inset:0; background:rgba(0,0,0,.55); display:flex; align-items:center; justify-content:center; z-index:999; backdrop-filter:blur(4px); }
+.loading-box { background:var(--branco); border-radius:16px; padding:36px 44px; text-align:center; }
+.spinner { width:44px; height:44px; border:4px solid var(--sirius); border-top-color:var(--aurora); border-radius:50%; animation:spin .8s linear infinite; margin:0 auto 16px; }
+@keyframes spin { to { transform:rotate(360deg); } }
+.loading-title { font-size:14px; font-weight:700; margin-bottom:4px; }
+.loading-sub { font-size:11px; color:var(--text-muted); }
+.err-banner { background:#fff5f5; border:1.5px solid #ffcdd2; border-radius:10px; padding:14px 18px; margin:16px 36px; display:flex; align-items:center; gap:10px; font-size:12px; color:#c62828; }
+
+/* FOOTER */
+footer { background:var(--eclipse); color:var(--nebulosa); text-align:center; padding:16px; font-size:10px; margin-top:16px; }
+footer span { color:var(--aurora); font-weight:600; }
+
+@media(max-width:900px){
+  .charts-row,.week-row { grid-template-columns:1fr; }
+  .chart-card.wide { grid-column:span 1; }
+  .main,.header,.filter-bar { padding-left:16px; padding-right:16px; }
+}
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-box">
+    <div class="spinner"></div>
+    <div class="loading-title">Carregando dados</div>
+    <div class="loading-sub">Lendo dados.json...</div>
+  </div>
+</div>
+
+<header class="header">
+  <div class="logo">
+    <div class="logo-mark">SG</div>
+    <div class="logo-text">Solar<span>Grid</span></div>
+  </div>
+  <div class="header-right">
+    <div class="header-title">Dashboard — Projetos Executivos</div>
+    <div class="header-sub">Engenharia · Civil &amp; Eletromecânica</div>
+    <div class="header-update" id="lastUpdate">—</div>
+  </div>
+</header>
+
+<div class="filter-bar">
+  <span class="flabel">Usina</span>
+  <button class="fbtn on" onclick="setUFV('TODAS',this)">Todas</button>
+  <button class="fbtn" onclick="setUFV('FSC',this)">FSC</button>
+  <button class="fbtn" onclick="setUFV('ARS1',this)">ARS1</button>
+  <button class="fbtn" onclick="setUFV('ARS2',this)">ARS2</button>
+  <button class="fbtn" onclick="setUFV('PDR1',this)">PDR1</button>
+  <button class="fbtn" onclick="setUFV('PDR4',this)">PDR4</button>
+  <div class="fdiv"></div>
+  <span class="flabel">Disciplina</span>
+  <button class="fbtn on" id="discTodas" onclick="setDisc('TODAS',this)">Todas</button>
+  <button class="fbtn" id="discCivil" onclick="setDisc('CIVIL',this)">Civil</button>
+  <button class="fbtn" id="discEletro" onclick="setDisc('ELETRO',this)">Eletromecânica</button>
+  <button class="refresh-btn" onclick="init()">↻ Atualizar</button>
+</div>
+
+<div class="err-banner" id="errBanner" style="display:none">
+  ⚠️ <span id="errMsg">Erro.</span>
+</div>
+
+<main class="main" id="mainContent" style="display:none">
+  <div class="kpi-grid" id="kpiGrid"></div>
+
+  <div class="sec-hdr">
+    <div class="sec-title">Avanço por Usina</div>
+    <div class="sec-sub">Civil e Eletromecânica separados</div>
+  </div>
+  <div class="ufv-grid" id="ufvGrid"></div>
+
+  <div class="sec-hdr"><div class="sec-title">Visão Gráfica</div></div>
+  <div class="charts-row">
+    <div class="chart-card wide">
+      <div class="chart-title">Avanço por Usina e Disciplina</div>
+      <div class="chart-desc">% de avanço médio por UFV</div>
+      <div class="chart-wrap tall"><canvas id="chartUFV"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Distribuição de Status</div>
+      <div class="chart-desc">Todos os documentos no filtro</div>
+      <div class="chart-wrap"><canvas id="chartStatus"></canvas></div>
+    </div>
+  </div>
+
+  <div class="sec-hdr">
+    <div class="sec-title">Movimentações da Semana</div>
+    <div class="sec-sub">Previsão de entrega e documentos com atraso na emissão</div>
+  </div>
+  <div class="week-row">
+    <div class="week-card">
+      <div class="chart-title">📋 Entregas Previstas Esta Semana</div>
+      <ul class="week-list" id="weekDeliveries"></ul>
+    </div>
+    <div class="week-card">
+      <div class="chart-title">⚠️ Documentos com Atraso na Emissão</div>
+      <ul class="week-list" id="weekDelays"></ul>
+    </div>
+  </div>
+
+  <div class="tbl-section">
+    <div class="sec-hdr">
+      <div class="sec-title">Lista de Documentos</div>
+      <div class="sec-sub" id="tblCount">—</div>
+    </div>
+    <div class="tbl-filters">
+      <input class="tbl-search" id="tblSearch" placeholder="🔍  Buscar por nome ou código..." oninput="renderTable()">
+      <select class="tbl-sel" id="fStatus" onchange="renderTable()">
+        <option value="">Todos os status</option>
+        <option>Liberado para obra</option>
+        <option>Aprovado</option>
+        <option>Em andamento</option>
+        <option>Não iniciado</option>
+        <option>Atrasado</option>
+      </select>
+      <select class="tbl-sel" id="fPrio" onchange="renderTable()">
+        <option value="">Todas as prioridades</option>
+        <option>P0</option><option>P1</option><option>P2</option>
+      </select>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>UFV</th><th>Nome</th>
+            <th>Disciplina</th><th>Tipo</th>
+            <th>Prioridade</th><th>Revisão</th><th>Status</th>
+            <th>Avanço</th><th>Baseline</th><th>Emissão</th>
+            <th>Emissão Revisão</th><th>Desvio</th>
+          </tr>
+        </thead>
+        <tbody id="tblBody"></tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<footer><span>SolarGrid</span> · Dashboard de Projetos Executivos · Dados via dados.json</footer>
+
+<script>
+// ═══════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════
+const ABAS = ['FSC','ARS1','ARS2','PDR1','PDR4'];
+let allData = [], filteredData = [];
+let activeUFV = 'TODAS', activeDisc = 'TODAS';
+let charts = {};
+
+// ═══════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════
+function pct(v) {
+  if (v === null || v === undefined || v === '') return 0;
+  const s = String(v).replace('%','').replace(',','.').trim();
+  const n = parseFloat(s);
+  return isNaN(n) ? 0 : n;
+}
+
+// Retorna o valor de avanço do documento, tentando múltiplas chaves
+function av(r) {
+  const keys = Object.keys(r);
+  // Procura qualquer chave que contenha "avan" (case-insensitive), ignorando quebras de linha e espaços
+  const k = keys.find(k => k.toLowerCase().replace(/\s+/g,'').includes('avan'));
+  return k ? pct(r[k]) : 0;
+}
+
+// Converte DD/MM/YYYY para Date
+function toDate(s) {
+  if (!s) return null;
+  const p = String(s).trim().split('/');
+  if (p.length !== 3) return null;
+  const d = new Date(+p[2], +p[1]-1, +p[0]);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+// Desvio em dias entre duas strings de data (positivo = atrasado)
+function desvio(baseStr, alvoStr) {
+  const b = toDate(baseStr), a = toDate(alvoStr);
+  if (!b || !a) return null;
+  return Math.round((a - b) / 86400000);
+}
+
+function fmtDesvio(d) {
+  if (d === null) return { txt:'—', cls:'dv-zero' };
+  if (d === 0)   return { txt:'0', cls:'dv-zero' };
+  return { txt:(d>0?'+':'')+d+'d', cls: d>0?'dv-neg':'dv-pos' };
+}
+
+function fmtDate(s) { return s ? String(s).trim() : '—'; }
+
+function statusCls(s) {
+  if (!s) return 's-nin';
+  const l = s.toLowerCase();
+  if (l.includes('liberado')) return 's-lib';
+  if (l.includes('aprovado')) return 's-apr';
+  if (l.includes('andamento')||l.includes('progresso')) return 's-and';
+  if (l.includes('atraso')||l.includes('atrasado')) return 's-atr';
+  if (l.includes('revis')||l.includes('análise')) return 's-rev';
+  return 's-nin';
+}
+
+function indCls(v) {
+  if (!v) return '';
+  const l = v.toLowerCase();
+  if (l==='ok') return 'ind-ok';
+  if (l.includes('alert')||l.includes('aten')) return 'ind-warn';
+  return 'ind-bad';
+}
+
+function discOf(r) {
+  const d = String(r['Disciplina']||r['DISCIPLINA']||'').toUpperCase();
+  return d.includes('CIVIL') ? 'CIVIL' : 'ELETRO';
+}
+
+function discChip(r) {
+  return discOf(r)==='CIVIL'
+    ? '<span class="disc-chip dc-civil">Civil</span>'
+    : '<span class="disc-chip dc-eletro">Eletromec.</span>';
+}
+
+function weekRange() {
+  const now = new Date(), day = now.getDay();
+  const mon = new Date(now); mon.setDate(now.getDate()-(day===0?6:day-1)); mon.setHours(0,0,0,0);
+  const sun = new Date(mon); sun.setDate(mon.getDate()+6); sun.setHours(23,59,59,999);
+  return {mon, sun};
+}
+
+function isThisWeek(s) {
+  const d = toDate(s); if (!d) return false;
+  const {mon,sun} = weekRange();
+  return d>=mon && d<=sun;
+}
+
+// ═══════════════════════════════════════
+//  LOAD
+// ═══════════════════════════════════════
+async function init() {
+  document.getElementById('loadingOverlay').style.display='flex';
+  document.getElementById('mainContent').style.display='none';
+  document.getElementById('errBanner').style.display='none';
+  allData=[];
+
+  try {
+    const resp = await fetch('dados.json?_='+Date.now());
+    if (!resp.ok) throw new Error('HTTP '+resp.status);
+    const json = await resp.json();
+
+    ABAS.forEach(aba => {
+      if (!Array.isArray(json[aba])) return;
+      json[aba].forEach(row => {
+        const r = {};
+        Object.keys(row).forEach(k => { r[k.trim()] = String(row[k]??''); r[k] = String(row[k]??''); });
+        if (!r['UFV']||!r['UFV'].trim()) r['UFV']=aba;
+        allData.push(r);
+      });
+    });
+
+    // Filtra linhas sem nome de documento
+    allData = allData.filter(r => (r['Nome Documento']||'').trim()!=='');
+
+    if (allData.length===0) throw new Error('dados.json sem linhas válidas');
+
+    const meta = json['_meta']||{};
+    document.getElementById('lastUpdate').textContent =
+      meta.atualizado_em ? 'Atualizado em '+meta.atualizado_em : 'Dados carregados';
+
+    document.getElementById('loadingOverlay').style.display='none';
+    document.getElementById('mainContent').style.display='block';
+    applyFilters();
+
+  } catch(e) {
+    console.error(e);
+    document.getElementById('loadingOverlay').style.display='none';
+    document.getElementById('errBanner').style.display='flex';
+    document.getElementById('errMsg').innerHTML =
+      'Arquivo <strong>dados.json</strong> não encontrado ou inválido. ' +
+      'Execute <strong>atualizar_dados.py</strong> e abra via <strong>http://localhost:8000</strong>.';
+  }
+}
+
+// ═══════════════════════════════════════
+//  FILTERS
+// ═══════════════════════════════════════
+function setUFV(val, el) {
+  activeUFV = val;
+  document.querySelectorAll('.filter-bar .fbtn').forEach(b => {
+    if (b.getAttribute('onclick')?.includes('setUFV')) b.classList.remove('on');
+  });
+  el.classList.add('on');
+  applyFilters();
+}
+
+function setDisc(val, el) {
+  activeDisc = val;
+  ['discTodas','discCivil','discEletro'].forEach(id => document.getElementById(id).classList.remove('on'));
+  el.classList.add('on');
+  applyFilters();
+}
+
+function applyFilters() {
+  filteredData = allData.filter(r => {
+    const ufv = (r['UFV']||'').trim().toUpperCase();
+    const disc = discOf(r);
+    const ufvOk = activeUFV==='TODAS' || ufv===activeUFV;
+    const discOk = activeDisc==='TODAS' || disc===activeDisc;
+    return ufvOk && discOk;
+  });
+  renderKPIs();
+  renderUFV();
+  renderCharts();
+  renderWeek();
+  renderTable();
+}
+
+// ═══════════════════════════════════════
+//  KPIs
+// ═══════════════════════════════════════
+function renderKPIs() {
+  const d = filteredData, n = d.length;
+  const avgAv = n ? d.reduce((s,r)=>s+av(r),0)/n : 0;
+  const concl = d.filter(r=>av(r)>=100).length;
+  const emAnd = d.filter(r=>{ const a=av(r); return a>0&&a<100; }).length;
+  const atrasados = d.filter(r=>{ const dv=desvio(r['Baseline'],r['Emissão Original']); return dv!==null&&dv>0; }).length;
+  const semana = d.filter(r=>isThisWeek(r['Previsão'])).length;
+
+  document.getElementById('kpiGrid').innerHTML = `
+    <div class="kpi accent">
+      <div class="kpi-lbl">Avanço Geral</div>
+      <div class="kpi-val">${avgAv.toFixed(0)}%</div>
+      <div class="kpi-sub">média de todos os documentos</div>
+    </div>
+    <div class="kpi dark">
+      <div class="kpi-lbl">Total de Documentos</div>
+      <div class="kpi-val">${n}</div>
+      <div class="kpi-sub">no filtro atual</div>
+    </div>
+    <div class="kpi dark">
+      <div class="kpi-lbl">Concluídos</div>
+      <div class="kpi-val">${concl}</div>
+      <div class="kpi-sub">${n?(concl/n*100).toFixed(0):0}% do total</div>
+      <div class="kpi-badge">${n?(concl/n*100).toFixed(0):0}%</div>
+    </div>
+    <div class="kpi light">
+      <div class="kpi-lbl">Em Andamento</div>
+      <div class="kpi-val">${emAnd}</div>
+      <div class="kpi-sub">documentos em progresso</div>
+    </div>
+    <div class="kpi light">
+      <div class="kpi-lbl">Emissão com Atraso</div>
+      <div class="kpi-val" style="${atrasados>0?'color:var(--vega)':''}">${atrasados}</div>
+      <div class="kpi-sub">emissão após baseline</div>
+    </div>
+    <div class="kpi light">
+      <div class="kpi-lbl">Entregas Esta Semana</div>
+      <div class="kpi-val">${semana}</div>
+      <div class="kpi-sub">previsão na semana atual</div>
+    </div>`;
+}
+
+// ═══════════════════════════════════════
+//  UFV CARDS
+// ═══════════════════════════════════════
+function renderUFV() {
+  const ufvs = activeUFV==='TODAS' ? ABAS : [activeUFV];
+  document.getElementById('ufvGrid').innerHTML = ufvs.map(ufv => {
+    const rows = allData.filter(r => {
+      const u=(r['UFV']||'').trim().toUpperCase();
+      const disc=discOf(r);
+      return u===ufv && (activeDisc==='TODAS'||disc===activeDisc);
+    });
+    if (!rows.length) return '';
+    const civil = rows.filter(r=>discOf(r)==='CIVIL');
+    const eletro = rows.filter(r=>discOf(r)==='ELETRO');
+    const avg = g => g.length ? g.reduce((s,r)=>s+av(r),0)/g.length : 0;
+    const aAll=avg(rows), aCiv=avg(civil), aEle=avg(eletro);
+    const concl = rows.filter(r=>av(r)>=100).length;
+    const atr = rows.filter(r=>{ const dv=desvio(r['Baseline'],r['Emissão Original']); return dv!==null&&dv>0; }).length;
+    return `
+    <div class="ufv-card">
+      <div class="ufv-hdr">
+        <div class="ufv-name">${ufv}</div>
+        <div class="ufv-tag">${rows.length} docs</div>
+      </div>
+      <div class="disc-row">
+        ${civil.length?`<div class="disc-item"><div class="disc-lbl">Civil</div><div class="pbar-wrap"><div class="pbar-fill fill-civil" style="width:${aCiv.toFixed(0)}%"></div></div><div class="disc-pct">${aCiv.toFixed(0)}%</div></div>`:''}
+        ${eletro.length?`<div class="disc-item"><div class="disc-lbl">Eletromec.</div><div class="pbar-wrap"><div class="pbar-fill fill-eletro" style="width:${aEle.toFixed(0)}%"></div></div><div class="disc-pct">${aEle.toFixed(0)}%</div></div>`:''}
+        <div class="disc-item"><div class="disc-lbl" style="font-weight:700;color:#000">Geral</div><div class="pbar-wrap"><div class="pbar-fill fill-geral" style="width:${aAll.toFixed(0)}%"></div></div><div class="disc-pct" style="color:var(--aurora)">${aAll.toFixed(0)}%</div></div>
+      </div>
+      <div class="ufv-stats">
+        <div class="ufv-stat"><div class="ufv-stat-val">${concl}</div><div class="ufv-stat-lbl">Concluídos</div></div>
+        <div class="ufv-stat"><div class="ufv-stat-val" style="${atr>0?'color:var(--vega)':''}">${atr}</div><div class="ufv-stat-lbl">Com Atraso</div></div>
+        <div class="ufv-stat"><div class="ufv-stat-val">${civil.length}</div><div class="ufv-stat-lbl">Civil</div></div>
+        <div class="ufv-stat"><div class="ufv-stat-val">${eletro.length}</div><div class="ufv-stat-lbl">Eletromec.</div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════
+//  CHARTS
+// ═══════════════════════════════════════
+function renderCharts() {
+  // Bar chart UFV
+  const civilVals=[], eletroVals=[];
+  ABAS.forEach(ufv => {
+    const rows = filteredData.filter(r=>(r['UFV']||'').trim().toUpperCase()===ufv);
+    const civil=rows.filter(r=>discOf(r)==='CIVIL');
+    const eletro=rows.filter(r=>discOf(r)==='ELETRO');
+    civilVals.push(civil.length?civil.reduce((s,r)=>s+av(r),0)/civil.length:0);
+    eletroVals.push(eletro.length?eletro.reduce((s,r)=>s+av(r),0)/eletro.length:0);
+  });
+  if (charts.ufv) charts.ufv.destroy();
+  charts.ufv = new Chart(document.getElementById('chartUFV'),{
+    type:'bar',
+    data:{ labels:ABAS, datasets:[
+      {label:'Civil',data:civilVals,backgroundColor:'#000',borderRadius:5,barPercentage:.5},
+      {label:'Eletromecânica',data:eletroVals,backgroundColor:'#EC6726',borderRadius:5,barPercentage:.5}
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{labels:{font:{family:'Montserrat',size:11,weight:'600'}}}},
+      scales:{
+        y:{min:0,max:100,ticks:{callback:v=>v+'%',font:{family:'Montserrat',size:10}},grid:{color:'#F3F3F3'}},
+        x:{ticks:{font:{family:'Montserrat',size:11,weight:'600'}},grid:{display:false}}
+      }
+    }
+  });
+
+  // Doughnut status
+  const sc={};
+  filteredData.forEach(r=>{ const s=(r['Status']||'Não iniciado').trim(); sc[s]=(sc[s]||0)+1; });
+  const colors=['#2e7d32','#1565c0','#f57f17','#EC6726','#c62828','#6a1b9a','#CBD6D7','#000'];
+  if (charts.status) charts.status.destroy();
+  charts.status = new Chart(document.getElementById('chartStatus'),{
+    type:'doughnut',
+    data:{ labels:Object.keys(sc), datasets:[{data:Object.values(sc),backgroundColor:colors.slice(0,Object.keys(sc).length),borderWidth:0}]},
+    options:{ responsive:true, maintainAspectRatio:false, cutout:'60%',
+      plugins:{legend:{position:'bottom',labels:{font:{family:'Montserrat',size:10,weight:'600'},padding:10,boxWidth:10}}}
+    }
+  });
+}
+
+// ═══════════════════════════════════════
+//  WEEK
+// ═══════════════════════════════════════
+function renderWeek() {
+  const deliveries = filteredData.filter(r=>isThisWeek(r['Previsão']));
+  const delays = filteredData
+    .map(r=>({...r, _dv: desvio(r['Baseline'],r['Emissão Original'])}))
+    .filter(r=>r._dv!==null && r._dv>0)
+    .sort((a,b)=>b._dv-a._dv)
+    .slice(0,8);
+
+  const dot = r => `<div class="wdot ${discOf(r)==='CIVIL'?'civil':'eletro'}"></div>`;
+
+  document.getElementById('weekDeliveries').innerHTML = deliveries.length
+    ? deliveries.slice(0,8).map(r=>`<li>${dot(r)}<div class="witem-name">${r['Nome Documento']||r['Código Padrão']||'—'}</div><div class="witem-ufv">${(r['UFV']||'').trim()}</div></li>`).join('')
+    : '<li style="color:var(--text-muted);padding:10px 0">Nenhuma entrega prevista esta semana.</li>';
+
+  document.getElementById('weekDelays').innerHTML = delays.length
+    ? delays.map(r=>`<li>${dot(r)}<div class="witem-name">${r['Nome Documento']||r['Código Padrão']||'—'} <span style="color:var(--vega);font-weight:700">+${r._dv}d</span></div><div class="witem-ufv">${(r['UFV']||'').trim()}</div></li>`).join('')
+    : '<li style="color:var(--ok);padding:10px 0">✅ Nenhum atraso na emissão.</li>';
+}
+
+// ═══════════════════════════════════════
+//  TABLE
+// ═══════════════════════════════════════
+function renderTable() {
+  const search = document.getElementById('tblSearch').value.toLowerCase();
+  const fSt = document.getElementById('fStatus').value;
+  const fPr = document.getElementById('fPrio').value;
+
+  const data = filteredData.filter(r=>{
+    const nome=(r['Nome Documento']||'').toLowerCase();
+    const cod=(r['Código Padrão']||r['Código Documento']||'').toLowerCase();
+    return (!search||nome.includes(search)||cod.includes(search))
+      && (!fSt||(r['Status']||'').includes(fSt))
+      && (!fPr||(r['Prioridade']||'')===fPr);
+  });
+
+  document.getElementById('tblCount').textContent = `${data.length} documento${data.length!==1?'s':''}`;
+
+  document.getElementById('tblBody').innerHTML = data.slice(0,300).map(r=>{
+    const a=av(r);
+    const dvEm=desvio(r['Baseline'],r['Emissão Original']);
+    const dvPr=desvio(r['Baseline'],r['Previsão']);
+    const em=fmtDesvio(dvEm), pr=fmtDesvio(dvPr);
+    return `<tr>
+      <td><strong>${(r['UFV']||'').trim()}</strong></td>
+      <td style="max-width:200px;word-break:break-word">${r['Nome Documento']||'—'}</td>
+      <td>${discChip(r)}</td>
+      <td class="td-muted">${r['Tipo']||'—'}</td>
+      <td><strong>${r['Prioridade']||'—'}</strong></td>
+      <td class="td-muted">${r['Revisão']||'—'}</td>
+      <td><span class="status-pill ${statusCls(r['Status'])}">${r['Status']||'—'}</span></td>
+      <td><div class="pbar-mini-wrap"><div class="pbar-mini"><div class="pbar-mini-fill" style="width:${a}%"></div></div><span style="font-size:10px;font-weight:700">${a.toFixed(0)}%</span></div></td>
+      <td class="td-muted">${fmtDate(r['Baseline'])}</td>
+      <td class="td-muted">${fmtDate(r['Emissão Original'])}</td>
+      <td class="td-muted">${fmtDate(r['Previsão'])}</td>
+      <td class="${em.cls}">${em.txt}</td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="15" style="text-align:center;padding:28px;color:var(--text-muted)">Nenhum documento encontrado.</td></tr>`;
+}
+
+// ═══════════════════════════════════════
+//  START
+// ═══════════════════════════════════════
+init();
+</script>
+</body>
+</html>
