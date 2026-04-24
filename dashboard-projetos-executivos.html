@@ -41,7 +41,7 @@ body { font-family:'Montserrat',sans-serif; background:var(--sirius); color:var(
 .main { padding:28px 36px; }
 
 /* KPI */
-.kpi-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:14px; margin-bottom:28px; }
+.kpi-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:14px; margin-bottom:28px; }
 .kpi { border-radius:12px; padding:22px 20px 18px; position:relative; overflow:hidden; transition:transform .2s; }
 .kpi:hover { transform:translateY(-2px); }
 .kpi.dark { background:var(--eclipse); }
@@ -239,7 +239,19 @@ footer span { color:var(--aurora); font-weight:600; }
       <ul class="week-list" id="weekDeliveries"></ul>
     </div>
     <div class="week-card">
-      <div class="chart-title">⚠️ Documentos com Atraso na Emissão</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+        <div class="chart-title">⚠️ Documentos com Atraso na Emissão</div>
+        <div style="display:flex;gap:10px">
+          <div style="text-align:center;padding:6px 12px;background:#fff5f5;border-radius:8px;border:1px solid #ffcdd2">
+            <div style="font-size:18px;font-weight:700;color:var(--vega);line-height:1" id="atrPendNum">—</div>
+            <div style="font-size:9px;font-weight:600;color:#c62828;text-transform:uppercase;letter-spacing:.5px;margin-top:2px">Pendentes</div>
+          </div>
+          <div style="text-align:center;padding:6px 12px;background:#fff8f0;border-radius:8px;border:1px solid #ffe0b2">
+            <div style="font-size:18px;font-weight:700;color:var(--aurora);line-height:1" id="atrEmitNum">—</div>
+            <div style="font-size:9px;font-weight:600;color:#e65100;text-transform:uppercase;letter-spacing:.5px;margin-top:2px">Emitidos c/ Atraso</div>
+          </div>
+        </div>
+      </div>
       <ul class="week-list" id="weekDelays"></ul>
     </div>
   </div>
@@ -255,9 +267,7 @@ footer span { color:var(--aurora); font-weight:600; }
         <option value="">Todos os status</option>
         <option>Liberado para obra</option>
         <option>Aprovado</option>
-        <option>Em andamento</option>
-        <option>Não iniciado</option>
-        <option>Atrasado</option>
+        <option>Lista de Documentos</option>
       </select>
       <select class="tbl-sel" id="fPrio" onchange="renderTable()">
         <option value="">Todas as prioridades</option>
@@ -268,11 +278,11 @@ footer span { color:var(--aurora); font-weight:600; }
       <table>
         <thead>
           <tr>
-            <th>UFV</th><th>Nome</th>
+            <th>UFV</th><th onclick="sortTable('nome')" style="cursor:pointer">Nome <span id="sNome"></span></th>
             <th>Disciplina</th><th>Tipo</th>
-            <th>Prioridade</th><th>Revisão</th><th>Status</th>
-            <th>Avanço</th><th>Baseline</th><th>Emissão</th>
-            <th>Emissão Revisão</th><th>Desvio</th>
+            <th onclick="sortTable('prio')" style="cursor:pointer">Prioridade <span id="sPrio"></span></th><th>Revisão</th><th>Status</th>
+            <th onclick="sortTable('av')" style="cursor:pointer">Avanço <span id="sAv"></span></th><th onclick="sortTable('baseline')" style="cursor:pointer">Baseline <span id="sBaseline"></span></th><th onclick="sortTable('emissao')" style="cursor:pointer">Emissão <span id="sEmissao"></span></th>
+            <th onclick="sortTable('previsao')" style="cursor:pointer">Emissão Revisão <span id="sPrevisao"></span></th><th onclick="sortTable('desvio')" style="cursor:pointer">Desvio <span id="sDesvio"></span></th>
           </tr>
         </thead>
         <tbody id="tblBody"></tbody>
@@ -291,6 +301,7 @@ const ABAS = ['FSC','ARS1','ARS2','PDR1','PDR4'];
 let allData = [], filteredData = [];
 let activeUFV = 'TODAS', activeDisc = 'TODAS';
 let charts = {};
+let sortCol = null, sortDir = 1; // 1=asc, -1=desc
 
 // ═══════════════════════════════════════
 //  HELPERS
@@ -467,6 +478,8 @@ function renderKPIs() {
   const concl = d.filter(r=>av(r)>=100).length;
   const emAnd = d.filter(r=>{ const a=av(r); return a>0&&a<100; }).length;
   const atrasados = d.filter(r=>{ const dv=desvio(r['Baseline'],r['Emissão Original']); return dv!==null&&dv>0; }).length;
+  const atrPend = d.filter(r=>{ const dv=desvio(r['Baseline'],r['Emissão Original']); return dv!==null&&dv>0&&av(r)===0; }).length;
+  const atrEmit = d.filter(r=>{ const dv=desvio(r['Baseline'],r['Emissão Original']); return dv!==null&&dv>0&&av(r)>0; }).length;
   const semana = d.filter(r=>isThisWeek(r['Previsão'])).length;
 
   document.getElementById('kpiGrid').innerHTML = `
@@ -490,11 +503,6 @@ function renderKPIs() {
       <div class="kpi-lbl">Em Andamento</div>
       <div class="kpi-val">${emAnd}</div>
       <div class="kpi-sub">documentos em progresso</div>
-    </div>
-    <div class="kpi light">
-      <div class="kpi-lbl">Emissão com Atraso</div>
-      <div class="kpi-val" style="${atrasados>0?'color:var(--vega)':''}">${atrasados}</div>
-      <div class="kpi-sub">emissão após baseline</div>
     </div>
     <div class="kpi light">
       <div class="kpi-lbl">Entregas Esta Semana</div>
@@ -592,24 +600,53 @@ function renderWeek() {
   const deliveries = filteredData.filter(r=>isThisWeek(r['Previsão']));
   const delays = filteredData
     .map(r=>({...r, _dv: desvio(r['Baseline'],r['Emissão Original'])}))
-    .filter(r=>r._dv!==null && r._dv>0)
+    .filter(r=>r._dv!==null && r._dv>0 && av(r)===0)
     .sort((a,b)=>b._dv-a._dv)
     .slice(0,8);
 
   const dot = r => `<div class="wdot ${discOf(r)==='CIVIL'?'civil':'eletro'}"></div>`;
 
   document.getElementById('weekDeliveries').innerHTML = deliveries.length
-    ? deliveries.slice(0,8).map(r=>`<li>${dot(r)}<div class="witem-name">${r['Nome Documento']||r['Código Padrão']||'—'}</div><div class="witem-ufv">${(r['UFV']||'').trim()}</div></li>`).join('')
+    ? deliveries.slice(0,8).map(r=>{
+        const a=av(r);
+        const badge = a>=100
+          ? '<span style="font-size:9px;font-weight:700;background:#e8f5e9;color:#2e7d32;padding:1px 7px;border-radius:10px;margin-left:6px">✓ Concluído</span>'
+          : a>0
+          ? `<span style="font-size:9px;font-weight:700;background:#fff8e1;color:#f57f17;padding:1px 7px;border-radius:10px;margin-left:6px">${a.toFixed(0)}% iniciado</span>`
+          : '';
+        return `<li>${dot(r)}<div class="witem-name">${r['Nome Documento']||'—'}${badge}</div><div class="witem-ufv">${(r['UFV']||'').trim()}</div></li>`;
+      }).join('')
     : '<li style="color:var(--text-muted);padding:10px 0">Nenhuma entrega prevista esta semana.</li>';
 
+  // Atualiza mini-counters
+  const _atrPend = filteredData.filter(r=>{ const dv=desvio(r['Baseline'],r['Emissão Original']); return dv!==null&&dv>0&&av(r)===0; }).length;
+  const _atrEmit = filteredData.filter(r=>{ const dv=desvio(r['Baseline'],r['Emissão Original']); return dv!==null&&dv>0&&av(r)>0; }).length;
+  const elP=document.getElementById('atrPendNum'), elE=document.getElementById('atrEmitNum');
+  if(elP) elP.textContent=_atrPend;
+  if(elE) elE.textContent=_atrEmit;
+
   document.getElementById('weekDelays').innerHTML = delays.length
-    ? delays.map(r=>`<li>${dot(r)}<div class="witem-name">${r['Nome Documento']||r['Código Padrão']||'—'} <span style="color:var(--vega);font-weight:700">+${r._dv}d</span></div><div class="witem-ufv">${(r['UFV']||'').trim()}</div></li>`).join('')
+    ? delays.map(r=>{
+        const tipo = (r['Tipo']||'').toUpperCase();
+        const tipoBadge = tipo.includes('EXTERNO')
+          ? '<span style="font-size:9px;font-weight:700;background:#fff3e0;color:#e65100;padding:1px 7px;border-radius:10px;margin-left:5px">EXT</span>'
+          : tipo.includes('INTERNO')
+          ? '<span style="font-size:9px;font-weight:700;background:#e8eaf6;color:#283593;padding:1px 7px;border-radius:10px;margin-left:5px">INT</span>'
+          : '';
+        return `<li>${dot(r)}<div class="witem-name">${r['Nome Documento']||'—'}${tipoBadge} <span style="color:var(--vega);font-weight:700">+${r._dv}d</span></div><div class="witem-ufv">${(r['UFV']||'').trim()}</div></li>`;
+      }).join('')
     : '<li style="color:var(--ok);padding:10px 0">✅ Nenhum atraso na emissão.</li>';
 }
 
 // ═══════════════════════════════════════
 //  TABLE
 // ═══════════════════════════════════════
+function sortTable(col) {
+  if (sortCol === col) sortDir *= -1;
+  else { sortCol = col; sortDir = 1; }
+  renderTable();
+}
+
 function renderTable() {
   const search = document.getElementById('tblSearch').value.toLowerCase();
   const fSt = document.getElementById('fStatus').value;
@@ -624,6 +661,28 @@ function renderTable() {
   });
 
   document.getElementById('tblCount').textContent = `${data.length} documento${data.length!==1?'s':''}`;
+
+  // Ordenação
+  const sortMap = {
+    nome: r => (r['Nome Documento']||'').toLowerCase(),
+    prio: r => (r['Prioridade']||'').replace('P',''),
+    av:   r => av(r),
+    baseline: r => { const d=toDate(r['Baseline']); return d?d.getTime():0; },
+    emissao:  r => { const d=toDate(r['Emissão Original']); return d?d.getTime():0; },
+    previsao: r => { const d=toDate(r['Previsão']); return d?d.getTime():0; },
+    desvio:   r => { const dv=desvio(r['Baseline'],r['Emissão Original']); return dv===null?-9999:dv; },
+  };
+  if (sortCol && sortMap[sortCol]) {
+    data.sort((a,b) => {
+      const va=sortMap[sortCol](a), vb=sortMap[sortCol](b);
+      return va<vb?-sortDir:va>vb?sortDir:0;
+    });
+  }
+  // Atualiza setas
+  ['nome','prio','av','baseline','emissao','previsao','desvio'].forEach(c => {
+    const el = document.getElementById('s'+c.charAt(0).toUpperCase()+c.slice(1));
+    if (el) el.textContent = sortCol===c ? (sortDir===1?' ↑':' ↓') : '';
+  });
 
   document.getElementById('tblBody').innerHTML = data.slice(0,300).map(r=>{
     const a=av(r);
