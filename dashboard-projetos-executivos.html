@@ -231,32 +231,24 @@ footer span { color:var(--aurora); font-weight:600; }
 
   <div class="sec-hdr">
     <div class="sec-title">Movimentações da Semana</div>
-    <div class="sec-sub">Previsão de entrega e documentos com atraso na emissão</div>
+    <div class="sec-sub">Previsão de entrega na semana atual</div>
   </div>
   <div class="week-row">
+
     <div class="week-card">
       <div class="chart-title">📋 Entregas Previstas Esta Semana</div>
       <ul class="week-list" id="weekDeliveries"></ul>
     </div>
+
     <div class="week-card">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-        <div class="chart-title">⚠️ Documentos com Atraso na Emissão</div>
-        <div style="display:flex;gap:10px">
-          <div style="text-align:center;padding:6px 12px;background:#fff5f5;border-radius:8px;border:1px solid #ffcdd2">
-            <div style="font-size:18px;font-weight:700;color:var(--vega);line-height:1" id="atrPendNum">—</div>
-            <div style="font-size:9px;font-weight:600;color:#c62828;text-transform:uppercase;letter-spacing:.5px;margin-top:2px">Pendentes</div>
-          </div>
-          <div style="text-align:center;padding:6px 12px;background:#fff8f0;border-radius:8px;border:1px solid #ffe0b2">
-            <div style="font-size:18px;font-weight:700;color:var(--aurora);line-height:1" id="atrEmitNum">—</div>
-            <div style="font-size:9px;font-weight:600;color:#e65100;text-transform:uppercase;letter-spacing:.5px;margin-top:2px">Emitidos c/ Atraso</div>
-          </div>
-        </div>
-      </div>
-      <ul class="week-list" id="weekDelays"></ul>
+      <div class="chart-title">🎯 Distribuição por Prioridade</div>
+      <div class="chart-desc">Concluídos · Em andamento · Não iniciados</div>
+      <div id="prioCards" style="display:flex;flex-direction:column;gap:10px;margin-top:8px"></div>
     </div>
+
   </div>
 
-  <div class="tbl-section">
+    <div class="tbl-section">
     <div class="sec-hdr">
       <div class="sec-title">Lista de Documentos</div>
       <div class="sec-sub" id="tblCount">—</div>
@@ -268,10 +260,11 @@ footer span { color:var(--aurora); font-weight:600; }
         <option>Liberado para obra</option>
         <option>Aprovado</option>
         <option>Lista de Documentos</option>
+        <option>Em aprovação - Visível a todos</option>
       </select>
       <select class="tbl-sel" id="fPrio" onchange="renderTable()">
         <option value="">Todas as prioridades</option>
-        <option>P0</option><option>P1</option><option>P2</option>
+        <option>P0</option><option>P1</option><option>P2</option><option>P3</option>
       </select>
     </div>
     <div class="tbl-wrap">
@@ -281,8 +274,8 @@ footer span { color:var(--aurora); font-weight:600; }
             <th>UFV</th><th onclick="sortTable('nome')" style="cursor:pointer">Nome <span id="sNome"></span></th>
             <th>Disciplina</th><th>Tipo</th>
             <th onclick="sortTable('prio')" style="cursor:pointer">Prioridade <span id="sPrio"></span></th><th>Revisão</th><th>Status</th>
-            <th onclick="sortTable('av')" style="cursor:pointer">Avanço <span id="sAv"></span></th><th onclick="sortTable('baseline')" style="cursor:pointer">Baseline <span id="sBaseline"></span></th><th onclick="sortTable('emissao')" style="cursor:pointer">Emissão <span id="sEmissao"></span></th>
-            <th onclick="sortTable('previsao')" style="cursor:pointer">Emissão Revisão <span id="sPrevisao"></span></th><th onclick="sortTable('desvio')" style="cursor:pointer">Desvio <span id="sDesvio"></span></th>
+            <th onclick="sortTable('av')" style="cursor:pointer">Avanço <span id="sAv"></span></th><th onclick="sortTable('baseline')" style="cursor:pointer">Baseline <span id="sBaseline"></span></th><th onclick="sortTable('emissao')" style="cursor:pointer">Emissão Original <span id="sEmissao"></span></th>
+            <th onclick="sortTable('previsao')" style="cursor:pointer">Previsão <span id="sPrevisao"></span></th><th onclick="sortTable('desvio')" style="cursor:pointer">Desvio <span id="sDesvio"></span></th>
           </tr>
         </thead>
         <tbody id="tblBody"></tbody>
@@ -466,6 +459,7 @@ function applyFilters() {
   renderUFV();
   renderCharts();
   renderWeek();
+  renderPrio();
   renderTable();
 }
 
@@ -596,17 +590,52 @@ function renderCharts() {
 // ═══════════════════════════════════════
 //  WEEK
 // ═══════════════════════════════════════
+
+
+
+function renderPrio() {
+  const el = document.getElementById('prioCards');
+  if (!el) return;
+  const prios = ['P0','P1','P2','P3'];
+  const dotColors = { P0:'#EC6726', P1:'#000000', P2:'#7C7C7B', P3:'#CBD6D7' };
+  el.innerHTML = prios.map(p => {
+    const docs = filteredData.filter(r=>(r['Prioridade']||'')===p);
+    if (!docs.length) return '';
+    const total = docs.length;
+    const done  = docs.filter(r=>av(r)>=100).length;
+    const prog  = docs.filter(r=>av(r)>0&&av(r)<100).length;
+    const none  = total - done - prog;
+    const pctD  = Math.round(done/total*100);
+    const pctP  = Math.round(prog/total*100);
+    const pctN  = 100 - pctD - pctP;
+    return `
+    <div style="background:var(--sirius);border-radius:10px;padding:12px 14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${dotColors[p]}"></span>
+          <span style="font-size:13px;font-weight:700">${p}</span>
+          <span style="font-size:10px;color:var(--text-muted);font-weight:500">${total} docs</span>
+        </div>
+        <div style="display:flex;gap:14px;font-size:10px;font-weight:600">
+          <span style="color:var(--eclipse)">■ Concluído: ${done} (${pctD}%)</span>
+          <span style="color:var(--aurora)">■ Andamento: ${prog} (${pctP}%)</span>
+          <span style="color:#aaa">■ Pendente: ${none} (${pctN}%)</span>
+        </div>
+      </div>
+      <div style="height:10px;background:#e0e0e0;border-radius:5px;overflow:hidden;display:flex">
+        <div style="width:${pctD}%;background:var(--eclipse);transition:width .8s ease"></div>
+        <div style="width:${pctP}%;background:var(--aurora);transition:width .8s ease"></div>
+        <div style="width:${pctN}%;background:#CBD6D7;transition:width .8s ease"></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
 function renderWeek() {
   const deliveries = filteredData.filter(r=>isThisWeek(r['Previsão']));
-  const delays = filteredData
-    .map(r=>({...r, _dv: desvio(r['Baseline'],r['Emissão Original'])}))
-    .filter(r=>r._dv!==null && r._dv>0 && av(r)===0)
-    .sort((a,b)=>b._dv-a._dv)
-    .slice(0,8);
-
   const dot = r => `<div class="wdot ${discOf(r)==='CIVIL'?'civil':'eletro'}"></div>`;
-
-  document.getElementById('weekDeliveries').innerHTML = deliveries.length
+  const elD = document.getElementById('weekDeliveries');
+  if (elD) elD.innerHTML = deliveries.length
     ? deliveries.slice(0,8).map(r=>{
         const a=av(r);
         const badge = a>=100
@@ -617,25 +646,6 @@ function renderWeek() {
         return `<li>${dot(r)}<div class="witem-name">${r['Nome Documento']||'—'}${badge}</div><div class="witem-ufv">${(r['UFV']||'').trim()}</div></li>`;
       }).join('')
     : '<li style="color:var(--text-muted);padding:10px 0">Nenhuma entrega prevista esta semana.</li>';
-
-  // Atualiza mini-counters
-  const _atrPend = filteredData.filter(r=>{ const dv=desvio(r['Baseline'],r['Emissão Original']); return dv!==null&&dv>0&&av(r)===0; }).length;
-  const _atrEmit = filteredData.filter(r=>{ const dv=desvio(r['Baseline'],r['Emissão Original']); return dv!==null&&dv>0&&av(r)>0; }).length;
-  const elP=document.getElementById('atrPendNum'), elE=document.getElementById('atrEmitNum');
-  if(elP) elP.textContent=_atrPend;
-  if(elE) elE.textContent=_atrEmit;
-
-  document.getElementById('weekDelays').innerHTML = delays.length
-    ? delays.map(r=>{
-        const tipo = (r['Tipo']||'').toUpperCase();
-        const tipoBadge = tipo.includes('EXTERNO')
-          ? '<span style="font-size:9px;font-weight:700;background:#fff3e0;color:#e65100;padding:1px 7px;border-radius:10px;margin-left:5px">EXT</span>'
-          : tipo.includes('INTERNO')
-          ? '<span style="font-size:9px;font-weight:700;background:#e8eaf6;color:#283593;padding:1px 7px;border-radius:10px;margin-left:5px">INT</span>'
-          : '';
-        return `<li>${dot(r)}<div class="witem-name">${r['Nome Documento']||'—'}${tipoBadge} <span style="color:var(--vega);font-weight:700">+${r._dv}d</span></div><div class="witem-ufv">${(r['UFV']||'').trim()}</div></li>`;
-      }).join('')
-    : '<li style="color:var(--ok);padding:10px 0">✅ Nenhum atraso na emissão.</li>';
 }
 
 // ═══════════════════════════════════════
