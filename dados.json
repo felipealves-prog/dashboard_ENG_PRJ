@@ -1993,8 +1993,8 @@
       "Avanço\n(NÃO MEXER)": "0,00%",
       "Baseline": "06/05/2026",
       "Emissão Original": "",
-      "Previsão": "08/05/2026",
-      "Desvio": "-2",
+      "Previsão": "15/05/2026",
+      "Desvio": "-9",
       "Indicador": "Verificar"
     },
     {
@@ -2012,8 +2012,8 @@
       "Avanço\n(NÃO MEXER)": "20,00%",
       "Baseline": "02/04/2026",
       "Emissão Original": "02/04/2026",
-      "Previsão": "08/05/2026",
-      "Desvio": "-36",
+      "Previsão": "15/05/2026",
+      "Desvio": "-43",
       "Indicador": "Revisar"
     },
     {
@@ -2679,8 +2679,8 @@
       "Avanço\n(NÃO MEXER)": "0,00%",
       "Baseline": "06/05/2026",
       "Emissão Original": "",
-      "Previsão": "08/05/2026",
-      "Desvio": "-2",
+      "Previsão": "15/05/2026",
+      "Desvio": "-9",
       "Indicador": "Verificar"
     },
     {
@@ -2698,8 +2698,8 @@
       "Avanço\n(NÃO MEXER)": "20,00%",
       "Baseline": "02/04/2026",
       "Emissão Original": "02/04/2026",
-      "Previsão": "08/05/2026",
-      "Desvio": "-36",
+      "Previsão": "15/05/2026",
+      "Desvio": "-43",
       "Indicador": "Revisar"
     },
     {
@@ -3536,8 +3536,8 @@
       "Avanço\n(NÃO MEXER)": "20,00%",
       "Baseline": "06/04/2026",
       "Emissão Original": "06/04/2026",
-      "Previsão": "08/05/2026",
-      "Desvio": "-32",
+      "Previsão": "15/05/2026",
+      "Desvio": "-39",
       "Indicador": "Revisar"
     },
     {
@@ -3897,8 +3897,8 @@
       "Avanço\n(NÃO MEXER)": "0,00%",
       "Baseline": "30/04/2026",
       "Emissão Original": "",
-      "Previsão": "08/05/2026",
-      "Desvio": "-8",
+      "Previsão": "11/05/2026",
+      "Desvio": "-11",
       "Indicador": "Verificar"
     },
     {
@@ -4315,8 +4315,8 @@
       "Avanço\n(NÃO MEXER)": "verificar",
       "Baseline": "12/05/2026",
       "Emissão Original": "",
-      "Previsão": "08/05/2026",
-      "Desvio": "4",
+      "Previsão": "15/05/2026",
+      "Desvio": "-3",
       "Indicador": "Verificar"
     },
     {
@@ -4640,8 +4640,8 @@
       "Avanço\n(NÃO MEXER)": "20,00%",
       "Baseline": "06/04/2026",
       "Emissão Original": "06/04/2026",
-      "Previsão": "08/05/2026",
-      "Desvio": "-32",
+      "Previsão": "15/05/2026",
+      "Desvio": "-39",
       "Indicador": "Revisar"
     },
     {
@@ -5001,8 +5001,8 @@
       "Avanço\n(NÃO MEXER)": "0,00%",
       "Baseline": "30/04/2026",
       "Emissão Original": "",
-      "Previsão": "08/05/2026",
-      "Desvio": "-8",
+      "Previsão": "11/05/2026",
+      "Desvio": "-11",
       "Indicador": "Verificar"
     },
     {
@@ -5482,7 +5482,7 @@
     }
   ],
   "_meta": {
-    "atualizado_em": "08/05/2026 11:50:16",
+    "atualizado_em": "11/05/2026 13:26:29",
     "total_documentos": 288,
     "abas": [
       "FSC",
